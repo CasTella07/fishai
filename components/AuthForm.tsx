@@ -28,6 +28,19 @@ function translateError(msg: string): string {
 export function AuthForm() {
   const { supabase } = useAuth();
   const [tab, setTab]           = useState<Tab>("login");
+
+  if (!supabase) {
+    return (
+      <div
+        className="rounded-2xl px-5 py-6 text-center"
+        style={{ background: C.card, border: `1px solid ${C.border}` }}
+      >
+        <p className="text-[13px]" style={{ color: C.text2 }}>
+          認証機能は現在準備中です。
+        </p>
+      </div>
+    );
+  }
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading]   = useState(false);
@@ -36,6 +49,7 @@ export function AuthForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!supabase) return;
     setError(null);
     setSuccess(null);
     setLoading(true);

@@ -183,12 +183,13 @@ export default function CatchLogPage() {
       ? customFishName.trim()
       : selectedFish;
     if (!actualFishName || !dateStr) return;
+    if (!supabase && user) return; // Supabase 無効時はDBへの保存をスキップ
     setSaving(true);
 
     try {
       let photoUrl: string | null = null;
 
-      if (photoFile && user) {
+      if (photoFile && user && supabase) {
         const ext = photoFile.name.split(".").pop()?.toLowerCase() ?? "jpg";
         const path = `${user.id}/${Date.now()}.${ext}`;
         const { data: uploadData, error: uploadError } = await supabase.storage
@@ -205,7 +206,7 @@ export default function CatchLogPage() {
         }
       }
 
-      if (user) {
+      if (user && supabase) {
         const { error } = await supabase.from("catch_records").insert({
           user_id:       user.id,
           fish_name:     actualFishName,
@@ -283,7 +284,7 @@ export default function CatchLogPage() {
     async function load() {
       setHistoryLoading(true);
       try {
-        if (user) {
+        if (user && supabase) {
           const { data } = await supabase
             .from("catch_records")
             .select("*")
@@ -348,7 +349,7 @@ export default function CatchLogPage() {
 
   /* ── 削除 ── */
   async function handleDelete(id: string) {
-    if (user) {
+    if (user && supabase) {
       const { error } = await supabase.from("catch_records").delete().eq("id", id).eq("user_id", user.id);
       if (error) { console.error("delete error:", error.message); return; }
     } else {

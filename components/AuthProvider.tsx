@@ -7,18 +7,27 @@ import { getSupabaseBrowserClient } from "@/lib/supabase-client";
 interface AuthCtx {
   user: User | null;
   loading: boolean;
-  supabase: SupabaseClient;
+  supabase: SupabaseClient | null;
   signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthCtx | null>(null);
+const DISABLED_CTX: AuthCtx = {
+  user: null,
+  loading: false,
+  supabase: null,
+  signOut: async () => {},
+};
+
+const AuthContext = createContext<AuthCtx>(DISABLED_CTX);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser]       = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const supabase = getSupabaseBrowserClient();
+  const [user, setUser]       = useState<User | null>(null);
+  const [loading, setLoading] = useState(supabase !== null);
 
   useEffect(() => {
+    if (!supabase) return;
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setLoading(false);
@@ -37,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       loading,
       supabase,
-      signOut: async () => { await supabase.auth.signOut(); },
+      signOut: async () => { await supabase?.auth.signOut(); },
     }}>
       {children}
     </AuthContext.Provider>
@@ -45,7 +54,5 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useAuth(): AuthCtx {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be inside AuthProvider");
-  return ctx;
+  return useContext(AuthContext);
 }
