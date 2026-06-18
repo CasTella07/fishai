@@ -1,0 +1,20 @@
+{
+  "name": "FishAI — 湘南の釣りAI",
+  "short_name": "FishAI",
+  "description": "潮汐グラフ・今日行くべき度・魚種ランキングを毎朝チェック。湘南エリア専属の釣りAIアシスタント。",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#030b16",
+  "theme_color": "#030b16",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["sports", "lifestyle", "utilities"],
+  "screenshots": []
+}
