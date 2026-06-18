@@ -3,8 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { BottomNav } from "@/components/BottomNav";
-import { AuthForm } from "@/components/AuthForm";
-import { useAuth } from "@/components/AuthProvider";
 import {
   USER_PROFILE, USER_TITLES, USER_MISSIONS, USER_BADGES,
   CAUGHT_FISH_NAMES,
@@ -22,7 +20,6 @@ function nextTitle(level: number) {
    PAGE
 ══════════════════════════════════════════════ */
 export default function AnalysisPage() {
-  const { user, loading, signOut } = useAuth();
   const [notifyFish, setNotifyFish]   = useState(true);
   const [notifySunrise, setNotifySunrise] = useState(true);
   const [notifySafety, setNotifySafety]  = useState(false);
@@ -49,64 +46,22 @@ export default function AnalysisPage() {
 
       <div className="px-5 pt-5 flex flex-col gap-5">
 
-        {/* ── Auth section ───────────────────────── */}
-        {loading ? (
-          <div
-            className="rounded-2xl px-5 py-8 flex items-center justify-center"
-            style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.08)" }}
-          >
-            <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin"
-                 style={{ borderColor: "#0EA5E9", borderTopColor: "transparent" }} />
+        {/* ── Coming-soon banner ───────────────────── */}
+        <div
+          className="rounded-2xl px-5 py-4 flex items-center gap-3"
+          style={{ background: "rgba(245,158,11,.07)", border: "1px solid rgba(245,158,11,.25)" }}
+        >
+          <span className="text-[20px] flex-shrink-0">🔒</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-bold" style={{ color: "#f59e0b" }}>ログイン機能は準備中です</p>
+            <p className="text-[11px] mt-0.5 leading-snug" style={{ color: "#8AA0B5" }}>
+              現在はゲストとして釣行データを確認できます
+            </p>
           </div>
-        ) : !user ? (
-          <div className="flex flex-col gap-4">
-            <div
-              className="rounded-2xl px-5 py-5 text-center"
-              style={{ background: "rgba(14,165,233,.05)", border: "1px solid rgba(14,165,233,.18)" }}
-            >
-              <p className="text-[28px] mb-2">🎣</p>
-              <p className="text-[15px] font-bold text-white mb-1">FishAI にログイン</p>
-              <p className="text-[12px] leading-relaxed" style={{ color: "#8AA0B5" }}>
-                釣果記録・ミッション・バッジなど<br />
-                あなたの釣りデータを保存できます
-              </p>
-            </div>
-            <AuthForm />
-          </div>
-        ) : (
-          /* ── Logged-in user card ─── */
-          <div
-            className="rounded-2xl px-5 py-4 flex items-center gap-4"
-            style={{ background: "rgba(14,165,233,.06)", border: "1px solid rgba(14,165,233,.2)" }}
-          >
-            <div
-              className="w-11 h-11 rounded-2xl flex items-center justify-center text-[20px] font-black flex-shrink-0"
-              style={{ background: "rgba(34,211,238,0.15)", color: "#22D3EE" }}
-            >
-              {user.email?.slice(0, 1).toUpperCase() ?? "?"}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-semibold mb-0.5" style={{ color: "#516070" }}>ログイン中</p>
-              <p className="text-[13px] font-bold truncate" style={{ color: "#E2EAF4" }}>
-                {user.email}
-              </p>
-            </div>
-            <button
-              onClick={() => signOut()}
-              className="text-[12px] font-semibold px-3 py-1.5 rounded-xl flex-shrink-0 active:opacity-70"
-              style={{
-                color: "#8AA0B5",
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.1)",
-              }}
-            >
-              ログアウト
-            </button>
-          </div>
-        )}
+        </div>
 
-        {/* ── Profile card (mock stats — ログイン時のみ表示) ─── */}
-        {!loading && user && (<>
+        {/* ── Profile card (mock stats) ─── */}
+        {(<>
         <div
           className="rounded-2xl px-5 py-5"
           style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.08)" }}

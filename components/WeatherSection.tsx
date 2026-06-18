@@ -216,6 +216,14 @@ export function WeatherSection({ data }: { data: FishingWeatherData }) {
   const wvc = waveColor(wx.waveHeight);
   const pc  = precipColor(wx.precipProbability);
 
+  // 日中の最高/最低気温をhourlyから算出
+  const temps = hourly.map((h) => h.temperature);
+  const maxTemp = temps.length ? Math.max(...temps) : wx.temperature;
+  const minTemp = temps.length ? Math.min(...temps) : wx.temperature;
+  const maxPrecip = hourly.length
+    ? Math.max(wx.precipProbability, ...hourly.map((h) => h.precipProbability))
+    : wx.precipProbability;
+
   return (
     <div className="px-4 mb-5">
       <div className="rounded-2xl overflow-hidden"
@@ -233,7 +241,7 @@ export function WeatherSection({ data }: { data: FishingWeatherData }) {
 
         {/* Current */}
         <div className="px-4 pt-4 pb-3">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
               <ConditionIcon code={wx.conditionCode} size={36} />
               <div>
@@ -241,23 +249,37 @@ export function WeatherSection({ data }: { data: FishingWeatherData }) {
                 <p className="text-[11px] mt-0.5" style={{ color: C.text3 }}>体感 {wx.feelsLike}°C</p>
               </div>
             </div>
-            <div className="flex items-start">
-              <span className="num-tab font-black text-[42px] leading-none" style={{ color: C.text1 }}>
-                {wx.temperature}
-              </span>
-              <span className="text-[16px] font-bold mt-1 ml-0.5" style={{ color: C.text3 }}>°C</span>
+            <div className="flex flex-col items-end">
+              <div className="flex items-start">
+                <span className="num-tab font-black text-[40px] leading-none" style={{ color: C.text1 }}>
+                  {wx.temperature}
+                </span>
+                <span className="text-[15px] font-bold mt-1 ml-0.5" style={{ color: C.text3 }}>°C</span>
+              </div>
+              {/* 最高/最低気温 */}
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="text-[11px] font-bold num-tab" style={{ color: "#F06060" }}>
+                  ↑{maxTemp}°
+                </span>
+                <span className="text-[11px] font-bold num-tab" style={{ color: "#60a5fa" }}>
+                  ↓{minTemp}°
+                </span>
+                {maxPrecip > 0 && (
+                  <span className="text-[11px] font-bold num-tab" style={{ color: precipColor(maxPrecip) }}>
+                    💧{maxPrecip}%
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* 2×2 metrics */}
-          <div className="grid grid-cols-2 gap-2">
-            <MetricCell label="降水確率" value={`${wx.precipProbability}%`} color={pc}
-                        icon={<IconDroplet size={14} />} />
+          {/* 3-col key metrics */}
+          <div className="grid grid-cols-3 gap-2 mb-3">
             <WindCell direction={wx.windDirection} speed={wx.windSpeed} color={wc} />
             <MetricCell label="波高" value={`${wx.waveHeight}m`} color={wvc}
                         icon={<IconWaves size={14} />} />
-            <MetricCell label="気圧" value={`${wx.pressure}hPa`} color={C.text2}
-                        icon={<IconBarometer size={14} />} />
+            <MetricCell label="降水確率" value={`${maxPrecip}%`} color={pc}
+                        icon={<IconDroplet size={14} />} />
           </div>
         </div>
 

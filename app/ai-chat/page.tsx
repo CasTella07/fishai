@@ -172,10 +172,10 @@ function AiChatInner() {
   const activeModeData = MODES.find((m) => m.id === activeMode);
 
   return (
-    <div className="flex flex-col" style={{ background: "#080f1c", height: "100dvh", paddingBottom: "calc(56px + env(safe-area-inset-bottom))" }}>
+    <div className="flex flex-col" style={{ background: "#080f1c", minHeight: "100dvh" }}>
 
       {/* ── HEADER ─────────────────────────────── */}
-      <header className="flex items-center gap-3 px-4 pt-12 pb-3 border-b"
+      <header className="sticky top-0 z-30 flex items-center gap-3 px-4 pt-12 pb-3 border-b"
               style={{ background: "rgba(8,15,28,.98)", borderColor: "rgba(255,255,255,.06)" }}>
         <Link href="/"
               className="w-9 h-9 rounded-xl flex items-center justify-center border border-white/10 text-white/60"
@@ -208,7 +208,7 @@ function AiChatInner() {
       </header>
 
       {/* ── MODE CHIPS ─────────────────────────── */}
-      <div className="flex gap-2 overflow-x-auto px-4 py-2.5"
+      <div className="sticky top-[73px] z-20 flex gap-2 overflow-x-auto px-4 py-2.5"
            style={{ background: "rgba(8,15,28,.95)", backdropFilter: "blur(12px)", scrollbarWidth: "none",
                     borderBottom: "1px solid rgba(255,255,255,.06)" }}>
         {MODES.map((m) => {
@@ -230,7 +230,8 @@ function AiChatInner() {
       </div>
 
       {/* ── CHAT AREA ──────────────────────────── */}
-      <main className="flex-1 overflow-y-auto px-4 py-5 flex flex-col gap-4">
+      <main className="px-4 py-5 flex flex-col gap-4 pb-40"
+            style={{ paddingBottom: "calc(140px + env(safe-area-inset-bottom))" }}>
 
         {/* Greeting */}
         <div className="flex items-end gap-2">
@@ -306,35 +307,55 @@ function AiChatInner() {
         <div ref={bottomRef} />
       </main>
 
-      {/* ── INPUT BAR ──────────────────────────── */}
-      <div className="flex-shrink-0 border-t border-white/8 px-4 py-3 flex items-end gap-2"
-           style={{ background: "rgba(8,15,28,.98)", backdropFilter: "blur(16px)" }}>
-        <textarea
-          ref={textareaRef}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="メッセージを入力... (Shift+Enterで改行)"
-          rows={1}
-          disabled={isLoading}
-          className="flex-1 resize-none rounded-2xl px-4 py-3 text-[13px] text-white placeholder:text-slate-600 outline-none transition-colors max-h-36 disabled:opacity-50"
-          style={{
-            background: "#0d1829",
-            border: "1px solid rgba(255,255,255,.1)",
-            lineHeight: "1.5",
-          }}
-        />
-        <button
-          onClick={() => sendMessage(input)}
-          disabled={!input.trim() || isLoading}
-          className="w-11 h-11 rounded-full flex items-center justify-center text-white flex-shrink-0 disabled:opacity-30 active:scale-95 transition-all"
-          style={{ background: "linear-gradient(135deg,#0891b2,#1d4ed8)" }}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="w-5 h-5">
-            <path strokeLinecap="round" strokeLinejoin="round"
-              d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
-          </svg>
-        </button>
+      {/* ── INPUT BAR (fixed above BottomNav) ── */}
+      <div
+        className="fixed z-40 left-1/2 -translate-x-1/2 w-full border-t"
+        style={{
+          maxWidth: 430,
+          bottom: "calc(56px + env(safe-area-inset-bottom))",
+          background: "rgba(8,15,28,.97)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          borderColor: "rgba(255,255,255,.09)",
+        }}
+      >
+        <div className="flex items-end gap-2 px-4 py-3">
+          <textarea
+            ref={textareaRef}
+            value={input}
+            onChange={(e) => {
+              setInput(e.target.value);
+              // auto-grow
+              const el = e.target;
+              el.style.height = "auto";
+              el.style.height = Math.min(el.scrollHeight, 140) + "px";
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder="メッセージを入力..."
+            rows={2}
+            disabled={isLoading}
+            className="flex-1 resize-none rounded-2xl px-4 py-3 text-white placeholder:text-slate-500 outline-none disabled:opacity-50"
+            style={{
+              background: "#0d1829",
+              border: "1px solid rgba(255,255,255,.12)",
+              lineHeight: "1.6",
+              fontSize: 16, // prevents iOS zoom on focus
+              minHeight: 52,
+              maxHeight: 140,
+            }}
+          />
+          <button
+            onClick={() => sendMessage(input)}
+            disabled={!input.trim() || isLoading}
+            className="w-12 h-12 rounded-full flex items-center justify-center text-white flex-shrink-0 disabled:opacity-30 active:scale-95 transition-all"
+            style={{ background: "linear-gradient(135deg,#0891b2,#1d4ed8)" }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round"
+                d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+            </svg>
+          </button>
+        </div>
       </div>
       <BottomNav />
     </div>

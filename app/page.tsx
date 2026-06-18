@@ -11,10 +11,7 @@ import { UserChip } from "@/components/UserChip";
 import { SpotPickerSheet } from "@/components/SpotPickerSheet";
 import { DayForecastCarousel } from "@/components/DayForecastCarousel";
 import type { DayCarouselData } from "@/components/DayForecastCarousel";
-import {
-  YESTERDAY_CATCHES, YESTERDAY_TOP_FISH, YESTERDAY_TOTAL, ACCURACY_RATE,
-  USER_PROFILE,
-} from "@/data/mockCatchData";
+import { USER_PROFILE } from "@/data/mockCatchData";
 
 /* ── Design tokens ─────────────────────────────── */
 const C = {
@@ -268,62 +265,26 @@ export default async function HomePage({
           </div>
         </div>
 
-        {/* ── 湘南速報 ──────────────────────────────── */}
-        <Block label="湘南速報" px={16} sub="昨日の釣果">
+        {/* ── みんなの釣果速報（準備中）────────────── */}
+        <Block label="みんなの釣果速報" px={16}>
           <div
-            className="rounded-2xl overflow-hidden"
+            className="rounded-2xl px-5 py-5 flex flex-col items-center gap-3 text-center"
             style={{ background: C.card, border: `1px solid ${C.border}` }}
           >
-            {/* Summary */}
-            <div
-              className="flex items-center gap-4 px-4 py-3.5"
-              style={{ borderBottom: `1px solid ${C.border}` }}
-            >
-              <div className="text-center flex-shrink-0">
-                <p className="text-[28px] font-black num-tab leading-none" style={{ color: C.ocean }}>
-                  {YESTERDAY_TOTAL}
-                </p>
-                <p className="text-[9px] mt-0.5" style={{ color: C.text3 }}>件の釣果</p>
-              </div>
-              <div className="flex-1 min-w-0 flex flex-wrap gap-x-3 gap-y-1.5">
-                {YESTERDAY_TOP_FISH.map((f) => (
-                  <div key={f.name} className="flex items-center gap-1">
-                    <span className="text-[11px]" style={{ color: C.text2 }}>{f.name}</span>
-                    <span className="text-[12px] font-black num-tab ml-0.5" style={{ color: C.ocean }}>{f.count}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="text-right flex-shrink-0">
-                <p className="text-[20px] font-black num-tab leading-none" style={{ color: C.green }}>
-                  {ACCURACY_RATE}%
-                </p>
-                <p className="text-[9px] mt-0.5" style={{ color: C.text3 }}>30日精度</p>
-              </div>
+            <span className="text-[32px]">🎣</span>
+            <div>
+              <p className="text-[14px] font-bold" style={{ color: C.text1 }}>湘南釣果速報 — 準備中</p>
+              <p className="text-[12px] mt-1 leading-snug" style={{ color: C.text2 }}>
+                ユーザーの釣果をリアルタイムで共有する機能を開発中です。
+              </p>
             </div>
-            {/* Catch rows */}
-            {YESTERDAY_CATCHES.map((c, i) => (
-              <div
-                key={c.id}
-                className={`flex items-center gap-3 px-4 py-3 ${i < YESTERDAY_CATCHES.length - 1 ? "border-b" : ""}`}
-                style={{ borderColor: C.border }}
-              >
-                <span className="text-[18px] leading-none w-6 text-center flex-shrink-0">{c.fishEmoji}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold" style={{ color: C.text1 }}>
-                    {c.fishName}
-                    <span className="font-normal text-[11px] ml-1.5 num-tab" style={{ color: C.ocean }}>
-                      {c.sizeCm}cm
-                    </span>
-                  </p>
-                  <p className="text-[10px] mt-0.5 truncate" style={{ color: C.text3 }}>
-                    {c.spotName} · {c.method}
-                  </p>
-                </div>
-                <span className="text-[11px] num-tab flex-shrink-0" style={{ color: C.text3 }}>
-                  {c.timeLabel}
-                </span>
-              </div>
-            ))}
+            <Link
+              href="/catch-log"
+              className="px-4 py-2.5 rounded-xl text-[13px] font-bold"
+              style={{ background: `${C.ocean}18`, border: `1px solid ${C.ocean}40`, color: C.ocean }}
+            >
+              自分の釣果を記録する →
+            </Link>
           </div>
         </Block>
 
@@ -363,10 +324,10 @@ export default async function HomePage({
               style={{ borderTop: `1px solid ${C.border}` }}
             >
               {[
-                { label: "釣行",  value: "23回" },
+                { label: "釣行",   value: "23回"  },
                 { label: "総釣果", value: "156尾" },
-                { label: "図鑑",  value: "8/10" },
-                { label: "最大",  value: "68cm" },
+                { label: "魚種",   value: "8種"   },
+                { label: "最大",   value: "68cm"  },
               ].map((s) => (
                 <div key={s.label}>
                   <p className="text-[14px] font-bold text-white">{s.value}</p>
