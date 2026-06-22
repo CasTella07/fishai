@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { IconFishHook } from "@tabler/icons-react";
 
 export default function NotFound() {
   return (
@@ -14,7 +15,12 @@ export default function NotFound() {
       }} />
 
       <div className="relative z-10 flex flex-col items-center gap-6 max-w-sm">
-        <div className="text-[64px] leading-none">🎣</div>
+        <div
+          className="w-20 h-20 rounded-2xl flex items-center justify-center"
+          style={{ background: "rgba(14,165,233,.1)", border: "1px solid rgba(14,165,233,.2)" }}
+        >
+          <IconFishHook size={40} stroke={1.5} color="#0ea5e9" />
+        </div>
         <div>
           <p className="text-[64px] font-black leading-none num-tab" style={{ color: "#0ea5e9" }}>404</p>
           <p className="text-[20px] font-bold text-white mt-2">ページが見つかりません</p>

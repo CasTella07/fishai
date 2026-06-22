@@ -1,4 +1,8 @@
 import Link from "next/link";
+import {
+  IconAnchor, IconAlertTriangle, IconCheck, IconX,
+  IconPencil, IconFishHook, IconRobot, IconBook2, IconChevronRight,
+} from "@tabler/icons-react";
 import { generateDailyForecast } from "@/lib/shonanForecast";
 import { getMethodByFish } from "@/data/fishingMethods";
 import { BottomNav } from "@/components/BottomNav";
@@ -274,7 +278,7 @@ export default async function HomePage({
             className="rounded-2xl px-5 py-4 flex items-start gap-3"
             style={{ background: C.card, border: `1.5px solid ${C.borderM}` }}
           >
-            <span className="text-[22px] leading-none flex-shrink-0 mt-0.5">⚓</span>
+            <IconAnchor size={20} stroke={1.5} color={C.cyan} className="flex-shrink-0 mt-0.5" />
             <div className="min-w-0">
               <p className="text-[10px] font-bold uppercase tracking-[0.1em] mb-1.5" style={{ color: C.cyan }}>
                 AI 船長の判断
@@ -411,19 +415,21 @@ export default async function HomePage({
         {/* ── クイックリンク ── */}
         <section className="px-4 mb-5">
           <div className="grid grid-cols-2 gap-2.5">
-            {[
-              { href: "/catch-log", icon: "📝", label: "釣果を記録する" },
-              { href: "/tackle",    icon: "🎣", label: "タックル登録"   },
-              { href: "/ai-chat",   icon: "🤖", label: "AI船長に相談"   },
-              { href: "/guide",     icon: "📖", label: "湘南魚図鑑"     },
-            ].map((item) => (
+            {(
+              [
+                { href: "/catch-log", Icon: IconPencil,   label: "釣果を記録する" },
+                { href: "/tackle",    Icon: IconFishHook,  label: "タックル登録"   },
+                { href: "/ai-chat",   Icon: IconRobot,     label: "AI船長に相談"   },
+                { href: "/guide",     Icon: IconBook2,     label: "湘南魚図鑑"     },
+              ] as const
+            ).map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 className="flex items-center gap-2.5 px-4 py-3.5 rounded-xl"
                 style={{ background: C.card, border: `1px solid ${C.border}` }}
               >
-                <span className="text-[18px] leading-none">{item.icon}</span>
+                <item.Icon size={18} stroke={1.5} color={C.text2} />
                 <span className="text-[12px] font-semibold" style={{ color: C.text2 }}>{item.label}</span>
               </Link>
             ))}
@@ -459,12 +465,14 @@ export default async function HomePage({
 ══════════════════════════════════════════════════ */
 
 function SafetyPill({ level, color }: { level: string; color: string }) {
+  const Icon = level === "安全" ? IconCheck : level === "注意" ? IconAlertTriangle : IconX;
   return (
     <span
       className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
       style={{ color, background: `${color}1c`, border: `1px solid ${color}40` }}
     >
-      {level === "安全" ? "✓" : level === "注意" ? "⚠" : "✕"} {level}
+      <Icon size={10} stroke={2.5} />
+      {level}
     </span>
   );
 }

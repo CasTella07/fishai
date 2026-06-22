@@ -1,6 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import {
+  IconChevronDown, IconWind, IconDroplet, IconWaveSine,
+  IconSun, IconCloudRain, IconFish,
+} from "@tabler/icons-react";
 import { TideGraph } from "@/components/TideGraph";
 import type { TideData } from "@/lib/tideApi";
 
@@ -89,15 +93,11 @@ export function DetailSection(props: DetailSectionProps) {
         <span className="text-[13px] font-bold" style={{ color: open ? C.ocean : C.text1 }}>
           詳細を見る
         </span>
-        <svg
-          width="16" height="16" viewBox="0 0 24 24" fill="none"
-          stroke={open ? C.ocean : C.text3} strokeWidth={2.5}
-          strokeLinecap="round" strokeLinejoin="round"
-          className="transition-transform"
-          style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
-        >
-          <path d="M6 9l6 6 6-6" />
-        </svg>
+        <IconChevronDown
+          size={16} stroke={2.5}
+          color={open ? C.ocean : C.text3}
+          style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform .2s" }}
+        />
       </button>
 
       {/* Expanded content */}
@@ -127,7 +127,7 @@ export function DetailSection(props: DetailSectionProps) {
           >
             <p className="text-[11px] font-bold mb-3" style={{ color: C.text3 }}>天気</p>
             <div className="flex items-center gap-4">
-              <span className="text-[40px] leading-none">{weatherIcon}</span>
+              <WeatherIcon code={weatherIcon} size={40} />
               <div>
                 <p className="text-[16px] font-black text-white">{weatherLabel}</p>
                 <p className="text-[13px] mt-0.5" style={{ color: C.text2 }}>{tempC}°C</p>
@@ -174,7 +174,7 @@ export function DetailSection(props: DetailSectionProps) {
           >
             <p className="text-[11px] font-bold mb-3" style={{ color: C.text3 }}>風</p>
             <div className="flex items-center gap-3 mb-3">
-              <span className="text-[32px] leading-none">💨</span>
+              <IconWind size={32} stroke={1.5} color={windOk ? C.green : C.amber} className="flex-shrink-0" />
               <div>
                 <p className="text-[18px] font-black" style={{ color: windOk ? C.green : C.amber }}>
                   {windDir}　{windSpeedMs.toFixed(1)} m/s
@@ -219,7 +219,7 @@ export function DetailSection(props: DetailSectionProps) {
                 className="flex items-center gap-3 px-4 py-3"
                 style={{ borderTop: i === 0 ? `1px solid ${C.border}` : `1px solid ${C.border}` }}
               >
-                <span className="text-[20px] leading-none w-8 text-center flex-shrink-0">{f.emoji}</span>
+                <IconFishIcon name={f.emoji} size={20} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
                     <span className="text-[13px] font-bold" style={{ color: C.text1 }}>{f.name}</span>
@@ -236,5 +236,23 @@ export function DetailSection(props: DetailSectionProps) {
         </div>
       )}
     </div>
+  );
+}
+
+/* ── 天気コードアイコン（絵文字→Tabler） ── */
+function WeatherIcon({ code, size }: { code: string; size: number }) {
+  if (code === "sunny" || code === "☀️" || code === "⛅")
+    return <IconSun size={size} stroke={1.5} color="#F59E0B" />;
+  if (code === "rainy" || code === "🌧️" || code === "🌦️")
+    return <IconCloudRain size={size} stroke={1.5} color="#60A5FA" />;
+  return <IconSun size={size} stroke={1.5} color="#94A3B8" />;
+}
+
+/* ── 魚アイコン（絵文字フォールバック → Tabler IconFish） ── */
+function IconFishIcon({ name: _name, size }: { name: string; size: number }) {
+  return (
+    <span className="w-8 text-center flex-shrink-0 flex items-center justify-center">
+      <IconFish size={size} stroke={1.5} color="#8AA0B5" />
+    </span>
   );
 }

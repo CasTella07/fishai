@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import {
+  IconMapPin, IconClock, IconFish, IconFishHook, IconDiamond, IconAnchor,
+} from "@tabler/icons-react";
 
 /* ── Props (all serializable — passed from Server Component) ── */
 export interface PlanData {
@@ -41,12 +44,12 @@ export function TodayPlanButton({ plan }: { plan: PlanData }) {
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
-  const rows = [
-    { icon: "📍", label: "場所",       value: `${plan.spotIcon} ${plan.spotName}` },
-    { icon: "🕐", label: "時間",       value: `${plan.startTime}〜${plan.endTime}` },
-    { icon: "🐟", label: "ターゲット", value: `${plan.fishEmoji} ${plan.fishName}（${plan.fishScore}点）` },
-    { icon: "🎣", label: "釣り方",     value: plan.methodName },
-    { icon: "🪁", label: "ルアー",     value: plan.lureName },
+  const rows: { Icon: React.ComponentType<{ size?: number; stroke?: number; color?: string }>; label: string; value: string }[] = [
+    { Icon: IconMapPin,    label: "場所",       value: plan.spotName },
+    { Icon: IconClock,     label: "時間",       value: `${plan.startTime}〜${plan.endTime}` },
+    { Icon: IconFish,      label: "ターゲット", value: `${plan.fishName}（${plan.fishScore}点）` },
+    { Icon: IconFishHook,  label: "釣り方",     value: plan.methodName },
+    { Icon: IconDiamond,   label: "ルアー",     value: plan.lureName },
   ];
 
   return (
@@ -171,7 +174,7 @@ export function TodayPlanButton({ plan }: { plan: PlanData }) {
                     className={`flex items-center gap-3 px-4 py-3.5 ${i < rows.length - 1 ? "border-b" : ""}`}
                     style={{ borderColor: "rgba(255,255,255,.06)" }}
                   >
-                    <span className="text-[18px] leading-none w-7 text-center flex-shrink-0">{row.icon}</span>
+                    <row.Icon size={18} stroke={1.5} color="#516070" />
                     <span className="text-[11px] w-[4.5rem] flex-shrink-0 font-medium" style={{ color: "#64748b" }}>
                       {row.label}
                     </span>
@@ -201,9 +204,12 @@ export function TodayPlanButton({ plan }: { plan: PlanData }) {
                 className="rounded-2xl px-4 py-4 mb-4"
                 style={{ background: "rgba(14,165,233,.06)", border: "1px solid rgba(14,165,233,.18)" }}
               >
-                <p className="text-[10px] font-bold tracking-widest mb-2" style={{ color: "#0ea5e9" }}>
-                  ⚓ 船長より
-                </p>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <IconAnchor size={14} stroke={1.5} color="#0ea5e9" />
+                  <p className="text-[10px] font-bold tracking-widest" style={{ color: "#0ea5e9" }}>
+                    船長より
+                  </p>
+                </div>
                 <p className="text-[13px] leading-relaxed" style={{ color: "#c5d5e8" }}>
                   {plan.captainComment}
                 </p>

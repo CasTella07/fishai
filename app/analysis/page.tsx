@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import {
+  IconFishHook, IconFish, IconBook2, IconRuler, IconChevronRight,
+} from "@tabler/icons-react";
 import { BottomNav } from "@/components/BottomNav";
 import { AuthForm } from "@/components/AuthForm";
 import { useAuth } from "@/components/AuthProvider";
@@ -133,10 +136,10 @@ export default function AnalysisPage() {
           >
             <div className="flex items-center gap-3 mb-3">
               <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center text-[22px] flex-shrink-0"
+                className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ background: "rgba(14,165,233,.14)" }}
               >
-                🎣
+                <IconFishHook size={22} stroke={1.5} color="#0ea5e9" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[11px] font-semibold" style={{ color: "#64748b" }}>ログイン中</p>
@@ -154,25 +157,27 @@ export default function AnalysisPage() {
                 <span className="text-[13px]" style={{ color: "#516070" }}>集計中…</span>
               </div>
             ) : (<>
-              {[
-                { label: "総釣果数",  value: stats?.catchTotal   ?? 0, unit: "尾",  icon: "🐟", color: "#10b981" },
-                { label: "魚種数",    value: stats?.speciesCount ?? 0, unit: "種",  icon: "📖", color: "#a78bfa" },
-                { label: "タックル", value: tackleCount,               unit: "個",  icon: "🎣", color: "#0ea5e9" },
-                {
-                  label: "自己最大",
-                  value: stats?.maxFishCm ? `${stats.maxFishCm}cm` : "—",
-                  unit:  stats?.maxFishName ?? "未記録",
-                  icon:  "📏",
-                  color: "#f59e0b",
-                },
-              ].map((s) => (
+              {(
+                [
+                  { label: "総釣果数", value: stats?.catchTotal   ?? 0, unit: "尾", Icon: IconFish,     color: "#10b981" },
+                  { label: "魚種数",   value: stats?.speciesCount ?? 0, unit: "種", Icon: IconBook2,    color: "#a78bfa" },
+                  { label: "タックル", value: tackleCount,               unit: "個", Icon: IconFishHook, color: "#0ea5e9" },
+                  {
+                    label: "自己最大",
+                    value: stats?.maxFishCm ? `${stats.maxFishCm}cm` : "—",
+                    unit:  stats?.maxFishName ?? "未記録",
+                    Icon:  IconRuler,
+                    color: "#f59e0b",
+                  },
+                ] as const
+              ).map((s) => (
                 <div
                   key={s.label}
                   className="rounded-2xl px-4 py-4"
                   style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.07)" }}
                 >
                   <div className="flex items-center gap-1.5 mb-2">
-                    <span className="text-[16px] leading-none">{s.icon}</span>
+                    <s.Icon size={14} stroke={1.5} color="#64748b" />
                     <span className="text-[10px] font-semibold" style={{ color: "#64748b" }}>{s.label}</span>
                   </div>
                   <p className="text-[24px] font-black leading-none" style={{ color: s.color }}>{s.value}</p>
@@ -215,7 +220,9 @@ export default function AnalysisPage() {
                     className="flex items-center gap-3 px-4 py-3"
                     style={{ borderBottom: i < recentCatches.length - 1 ? "1px solid rgba(255,255,255,.06)" : "none" }}
                   >
-                    <span className="text-[20px] leading-none w-8 text-center flex-shrink-0">🐟</span>
+                    <span className="w-8 flex items-center justify-center flex-shrink-0">
+                      <IconFish size={20} stroke={1.5} color="#516070" />
+                    </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-[13px] font-bold" style={{ color: "#e8f1fc" }}>{r.fish_name}</p>
                       <p className="text-[11px] mt-0.5" style={{ color: "#64748b" }}>

@@ -266,7 +266,7 @@ export function WeatherSection({ data }: { data: FishingWeatherData }) {
                 </span>
                 {maxPrecip > 0 && (
                   <span className="text-[11px] font-bold num-tab" style={{ color: precipColor(maxPrecip) }}>
-                    💧{maxPrecip}%
+                    <IconDroplet size={10} />{maxPrecip}%
                   </span>
                 )}
               </div>
