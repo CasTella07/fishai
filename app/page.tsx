@@ -7,11 +7,9 @@ import type { PlanData } from "@/components/TodayPlanButton";
 import { fetchTideDataMultiDay } from "@/lib/tideApi";
 import { TIDE_LOCATIONS } from "@/data/tideLocations";
 import { fetchFishingWeatherMultiDay } from "@/lib/weather";
-import { UserChip } from "@/components/UserChip";
 import { SpotPickerSheet } from "@/components/SpotPickerSheet";
 import { DayForecastCarousel } from "@/components/DayForecastCarousel";
 import type { DayCarouselData } from "@/components/DayForecastCarousel";
-import { USER_PROFILE } from "@/data/mockCatchData";
 
 /* ── Design tokens ─────────────────────────────── */
 const C = {
@@ -55,29 +53,29 @@ export default async function HomePage({
   const dateStr = todayJST();
   const tideLoc = TIDE_LOCATIONS.find((l) => l.id === (spotId ?? "chigasaki")) ?? TIDE_LOCATIONS[0];
 
-  // Fetch 5 days of weather + tide in parallel
   const [weatherDays, tideDays] = await Promise.all([
     fetchFishingWeatherMultiDay(tideLoc.id, 5),
     fetchTideDataMultiDay({ lat: tideLoc.lat, lng: tideLoc.lng, date: dateStr, location: tideLoc }, 5),
   ]);
 
-  // Generate forecasts for each day using prefetched data
   const fcDays = await Promise.all(
     weatherDays.map((wd, i) =>
       generateDailyForecast(wd.date, tideLoc.id, { weather: wd, tide: tideDays[i] }),
     ),
   );
 
-  // Today's data for the static sections
   const fc = fcDays[0];
-
   const { bestWindows, spotScores, fishScores, decision, safety, hourly } = fc;
 
   const topFish   = fishScores[0];
   const topMethod = getMethodByFish(topFish.fish.name);
   const bw0       = bestWindows[0];
   const topSpot   = spotScores[0];
-  const xpPct     = Math.round((USER_PROFILE.xp / USER_PROFILE.nextLevelXp) * 100);
+
+  const lureName = topMethod?.lures[0]
+    ? `${topMethod.lures[0].name}${topMethod.lures[0].weight ? ` ${topMethod.lures[0].weight}` : ""}`
+    : "ルアー";
+  const lureNote = topMethod?.depth.split("（")[0] ?? "";
 
   const planData: PlanData = {
     decisionType:   decision.type,
@@ -96,9 +94,7 @@ export default async function HomePage({
     fishEmoji:      topFish.fish.emoji,
     fishScore:      topFish.score,
     methodName:     topMethod?.technique.split("。")[0] ?? "ボトム中心",
-    lureName:       topMethod?.lures[0]
-      ? `${topMethod.lures[0].name}${topMethod.lures[0].weight ? ` ${topMethod.lures[0].weight}` : ""}`
-      : "ルアー",
+    lureName,
     safetyLevel:    safety.overall,
     safetyColor:    safety.color,
     safetyBg:       safety.bg,
@@ -108,7 +104,6 @@ export default async function HomePage({
     captainComment: fc.captainComment,
   };
 
-  // Build carousel data for 5 days
   const carouselDays: DayCarouselData[] = fcDays.map((dayFc, i) => ({
     date:        dayFc.date,
     fc:          dayFc,
@@ -122,7 +117,7 @@ export default async function HomePage({
 
       {/* ── HEADER ────────────────────────────────── */}
       <header
-        className="sticky top-0 z-40 px-5 pt-10 pb-3"
+        className="sticky top-0 z-40 px-4 pt-10 pb-3"
         style={{
           background: `${C.page}f0`,
           backdropFilter: "blur(16px)",
@@ -130,21 +125,18 @@ export default async function HomePage({
           borderBottom: `1px solid ${C.border}`,
         }}
       >
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-[20px] font-black tracking-[-0.03em] text-white leading-none">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h1 className="text-[22px] font-black tracking-[-0.03em] text-white leading-none">
               Fish<span style={{ color: C.cyan }}>AI</span>
             </h1>
-            <div className="flex items-center gap-2 mt-0.5">
-              <p className="text-[13px] font-medium" style={{ color: C.text2 }}>{tideLoc.name}</p>
+            <div className="flex items-center gap-1">
+              <span className="text-[13px] font-semibold" style={{ color: C.text2 }}>{tideLoc.name}</span>
               <SpotPickerSheet currentId={tideLoc.id} />
             </div>
           </div>
-          <div className="flex flex-col items-end gap-1.5">
-            <div className="flex items-center gap-2">
-              <UserChip />
-              <SafetyPill level={safety.overall} color={safety.color} />
-            </div>
+          <div className="flex items-center gap-2">
+            <SafetyPill level={safety.overall} color={safety.color} />
             <span className="text-[11px]" style={{ color: C.text3 }}>{fmtDate(dateStr)}</span>
           </div>
         </div>
@@ -152,21 +144,99 @@ export default async function HomePage({
 
       <main>
 
-        {/* ── 5-DAY FORECAST CAROUSEL ───────────────── */}
-        <DayForecastCarousel
-          days={carouselDays}
-          spotId={tideLoc.id}
-          spotName={tideLoc.name}
-        />
+        {/* ══════════════════════════════════════════
+            1. 今日行くべきか — AI 船長の判定
+        ══════════════════════════════════════════ */}
+        <section className="px-4 pt-4 pb-2">
+          <div
+            className="rounded-2xl px-5 py-5"
+            style={{
+              background: decision.bg,
+              border: `1.5px solid ${decision.border}`,
+            }}
+          >
+            <p
+              className="text-[10px] font-bold uppercase tracking-[0.12em] mb-3"
+              style={{ color: decision.color }}
+            >
+              AI 船長の判定
+            </p>
 
-        {/* ── BEST TIME CARDS ───────────────────────── */}
-        <Block label="狙い目時間" px={16}>
+            {/* Decision + Score */}
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-[56px] leading-none flex-shrink-0">{decision.icon}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[34px] font-black leading-none text-white tracking-[-0.02em]">
+                  {decision.type}
+                </p>
+                <p className="text-[12px] mt-2 leading-snug" style={{ color: C.text2 }}>
+                  {decision.reason}
+                </p>
+              </div>
+              <CircleGauge score={fc.goScore} />
+            </div>
+
+            {/* Action */}
+            <div
+              className="rounded-xl px-4 py-3 flex items-center gap-2.5"
+              style={{ background: "rgba(0,0,0,.25)" }}
+            >
+              <span className="text-[18px] leading-none flex-shrink-0">{bw0.icon}</span>
+              <p className="text-[13px] font-semibold leading-snug" style={{ color: C.text1 }}>
+                {decision.action}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ══════════════════════════════════════════
+            2〜5. 今日の計画：どこへ / 何を / 何時 / 何を投げる
+        ══════════════════════════════════════════ */}
+        <Block label="今日の計画" px={16}>
+          <div className="grid grid-cols-2 gap-2.5">
+            <PlanFact
+              icon="📍"
+              label="行くポイント"
+              main={topSpot.spot.name}
+              sub={`期待度 ${topSpot.score}点`}
+              color={scoreColor(topSpot.score)}
+            />
+            <PlanFact
+              icon={topFish.fish.emoji}
+              label="狙う魚"
+              main={topFish.fish.name}
+              sub={`期待度 ${topFish.score}点`}
+              color={scoreColor(topFish.score)}
+            />
+            <PlanFact
+              icon="⏰"
+              label="狙い目時間"
+              main={`${bw0.startTime}〜${bw0.endTime}`}
+              sub={bw0.label}
+              color={C.cyan}
+            />
+            <PlanFact
+              icon="🎯"
+              label="仕掛け"
+              main={lureName}
+              sub={lureNote}
+              color={C.ocean}
+            />
+          </div>
+        </Block>
+
+        {/* ══════════════════════════════════════════
+            4詳細. 時間帯別 期待度
+        ══════════════════════════════════════════ */}
+        <Block label="時間帯別 期待度" px={16}>
           <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide">
             {hourly.map((slot) => <HourlyCard key={slot.id} slot={slot} />)}
           </div>
         </Block>
 
-        {/* ── FISH RANKING ──────────────────────────── */}
+        {/* ══════════════════════════════════════════
+            3詳細. 魚種別 期待度
+        ══════════════════════════════════════════ */}
         <Block label="魚種別 期待度" px={16} href="/guide" linkText="図鑑を見る">
           <div
             className="rounded-2xl overflow-hidden"
@@ -184,62 +254,84 @@ export default async function HomePage({
           </div>
         </Block>
 
-        {/* ── SAFETY ────────────────────────────────── */}
-        <Block label="安全判定" px={16}>
-          {safety.overall === "危険" && (
-            <div
-              className="rounded-xl px-4 py-3.5 mb-3 text-center"
-              style={{ background: "rgba(240,96,96,0.1)", border: "1.5px solid rgba(240,96,96,0.35)" }}
-            >
-              <p className="text-[15px] font-black" style={{ color: C.red }}>
-                今日は釣行をおすすめしません
-              </p>
-              <p className="text-[12px] mt-1.5" style={{ color: C.text2 }}>
-                海況が危険な状態です。無理をしないでください。
-              </p>
-            </div>
-          )}
-          <div className="grid grid-cols-3 gap-2.5">
-            {safety.factors.map((f) => <SafetyCard key={f.label} factor={f} />)}
+        {/* ══════════════════════════════════════════
+            6. なぜその判断なのか — 判断の根拠
+        ══════════════════════════════════════════ */}
+        <Block label="判断の根拠" px={16}>
+
+          {/* 4-condition grid */}
+          <div className="grid grid-cols-2 gap-2.5 mb-3">
+            <ConditionFact
+              icon={fc.weather.icon}
+              label="天気"
+              value={fc.weather.label}
+              score={fc.scoreBreakdown.weatherScore}
+            />
+            <ConditionFact
+              icon="🌊"
+              label="波"
+              value={fc.weather.waveHeight}
+              score={fc.scoreBreakdown.waveScore}
+            />
+            <ConditionFact
+              icon="💨"
+              label="風"
+              value={`${fc.weather.windDir} ${fc.weather.windSpeed}`}
+              score={fc.scoreBreakdown.windScore}
+            />
+            <ConditionFact
+              icon="🌙"
+              label="潮"
+              value={fc.weather.tideType}
+              score={fc.scoreBreakdown.tideScore}
+            />
           </div>
-          {safety.overall === "注意" && (
+
+          {/* Safety quick-check */}
+          {safety.overall !== "安全" && (
             <div
-              className="mt-3 rounded-xl px-4 py-3 flex items-start gap-2.5"
-              style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)" }}
+              className="rounded-xl px-4 py-3.5 mb-3 flex items-start gap-2.5"
+              style={{
+                background: safety.overall === "危険"
+                  ? "rgba(240,96,96,0.1)"
+                  : "rgba(245,158,11,0.08)",
+                border: `1px solid ${safety.overall === "危険" ? "rgba(240,96,96,.35)" : "rgba(245,158,11,.25)"}`,
+              }}
             >
-              <svg
-                width="15" height="15" viewBox="0 0 24 24" fill="none"
-                stroke={C.amber} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
-                className="flex-shrink-0 mt-0.5"
+              <span className="text-[18px] leading-none flex-shrink-0">{safety.icon}</span>
+              <p
+                className="text-[12px] leading-relaxed font-semibold"
+                style={{ color: safety.color }}
               >
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                <line x1="12" y1="9" x2="12" y2="13" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
-              <p className="text-[12px] leading-relaxed" style={{ color: C.amber }}>
                 {safety.message}
               </p>
             </div>
           )}
-        </Block>
+          {safety.overall === "安全" && (
+            <div
+              className="rounded-xl px-4 py-3 mb-3 flex items-center gap-2"
+              style={{ background: "rgba(16,185,129,.07)", border: "1px solid rgba(16,185,129,.2)" }}
+            >
+              <span className="text-[16px] leading-none">✅</span>
+              <p className="text-[12px] font-semibold" style={{ color: C.green }}>
+                良好なコンディションです
+              </p>
+            </div>
+          )}
 
-        {/* ── CAPTAIN COMMENT ───────────────────────── */}
-        <div className="px-4 mb-5">
+          {/* Captain comment */}
           <div
             className="rounded-2xl px-5 py-4"
             style={{ background: C.card, border: `1px solid ${C.borderM}` }}
           >
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-2 mb-2.5">
               <svg
-                width="13" height="13" viewBox="0 0 24 24" fill="none"
+                width="12" height="12" viewBox="0 0 24 24" fill="none"
                 stroke={C.cyan} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
               >
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.24h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.08 6.08l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 17z" />
               </svg>
-              <span
-                className="text-[10px] font-bold uppercase tracking-[0.1em]"
-                style={{ color: C.cyan }}
-              >
+              <span className="text-[10px] font-bold uppercase tracking-[0.1em]" style={{ color: C.cyan }}>
                 今日の船長コメント
               </span>
             </div>
@@ -263,9 +355,28 @@ export default async function HomePage({
               </Link>
             </div>
           </div>
-        </div>
+        </Block>
 
-        {/* ── みんなの釣果速報（準備中）────────────── */}
+        {/* ══════════════════════════════════════════
+            5日間の見通し（潮汐・気象詳細）
+        ══════════════════════════════════════════ */}
+        <section className="mb-5">
+          <div className="flex items-end justify-between mb-2.5 px-4">
+            <div>
+              <h2 className="text-[13px] font-bold" style={{ color: C.text1 }}>5日間の見通し</h2>
+              <p className="text-[10px] mt-0.5" style={{ color: C.text3 }}>潮汐・気象の詳細データ</p>
+            </div>
+          </div>
+          <DayForecastCarousel
+            days={carouselDays}
+            spotId={tideLoc.id}
+            spotName={tideLoc.name}
+          />
+        </section>
+
+        {/* ══════════════════════════════════════════
+            みんなの釣果速報（準備中）
+        ══════════════════════════════════════════ */}
         <Block label="みんなの釣果速報" px={16}>
           <div
             className="rounded-2xl px-5 py-5 flex flex-col items-center gap-3 text-center"
@@ -285,56 +396,6 @@ export default async function HomePage({
             >
               自分の釣果を記録する →
             </Link>
-          </div>
-        </Block>
-
-        {/* ── MY STATS ──────────────────────────────── */}
-        <Block label="マイ実績" px={16} href="/analysis" linkText="詳細">
-          <div
-            className="rounded-2xl px-4 py-4"
-            style={{ background: C.card, border: `1px solid ${C.border}` }}
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <div
-                className="w-11 h-11 rounded-xl flex items-center justify-center font-black text-[14px] flex-shrink-0"
-                style={{ background: "rgba(14,165,233,.14)", color: C.ocean, border: "1px solid rgba(14,165,233,.25)" }}
-              >
-                {USER_PROFILE.level}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-baseline gap-1.5">
-                  <span className="font-bold text-[14px] text-white">{USER_PROFILE.currentTitle}</span>
-                  <span className="text-[11px] font-semibold" style={{ color: C.ocean }}>
-                    Lv.{USER_PROFILE.level}
-                  </span>
-                </div>
-                <div
-                  className="mt-1.5 rounded-full overflow-hidden"
-                  style={{ height: 3, background: "rgba(255,255,255,.08)" }}
-                >
-                  <div className="h-full rounded-full" style={{ width: `${xpPct}%`, background: C.ocean }} />
-                </div>
-              </div>
-              <span className="text-[10px] num-tab flex-shrink-0" style={{ color: C.text3 }}>
-                {USER_PROFILE.xp}/{USER_PROFILE.nextLevelXp}
-              </span>
-            </div>
-            <div
-              className="grid grid-cols-4 gap-2 text-center pt-3.5"
-              style={{ borderTop: `1px solid ${C.border}` }}
-            >
-              {[
-                { label: "釣行",   value: "23回"  },
-                { label: "総釣果", value: "156尾" },
-                { label: "魚種",   value: "8種"   },
-                { label: "最大",   value: "68cm"  },
-              ].map((s) => (
-                <div key={s.label}>
-                  <p className="text-[14px] font-bold text-white">{s.value}</p>
-                  <p className="text-[10px] mt-0.5" style={{ color: C.text3 }}>{s.label}</p>
-                </div>
-              ))}
-            </div>
           </div>
         </Block>
 
@@ -368,7 +429,9 @@ export default async function HomePage({
   );
 }
 
-/* ── SUBCOMPONENTS ──────────────────────────────── */
+/* ══════════════════════════════════════════════════
+   SUB-COMPONENTS
+══════════════════════════════════════════════════ */
 
 function Block({
   label, sub, href, linkText, px, children,
@@ -421,27 +484,24 @@ function SafetyPill({ level, color }: { level: string; color: string }) {
   );
 }
 
-
-
 function CircleGauge({ score }: { score: number }) {
-  const r     = 35;
+  const r     = 32;
   const circ  = 2 * Math.PI * r;
   const color = score >= 75 ? C.green : score >= 55 ? C.amber : C.red;
   const dash  = (score / 100) * circ;
   return (
-    <svg width="86" height="86" viewBox="0 0 86 86" style={{ flexShrink: 0 }}>
-      <circle cx="43" cy="43" r={r} fill="none"
-              stroke="rgba(255,255,255,.07)" strokeWidth="5" />
-      <circle cx="43" cy="43" r={r} fill="none"
+    <svg width="80" height="80" viewBox="0 0 80 80" style={{ flexShrink: 0 }}>
+      <circle cx="40" cy="40" r={r} fill="none" stroke="rgba(255,255,255,.07)" strokeWidth="5" />
+      <circle cx="40" cy="40" r={r} fill="none"
               stroke={color} strokeWidth="5"
               strokeDasharray={`${dash.toFixed(2)} ${(circ - dash).toFixed(2)}`}
               strokeLinecap="round"
-              transform="rotate(-90 43 43)" />
-      <text x="43" y="40" textAnchor="middle" fontSize="21" fontWeight="900"
+              transform="rotate(-90 40 40)" />
+      <text x="40" y="37" textAnchor="middle" fontSize="20" fontWeight="900"
             fill={color} fontFamily="system-ui, -apple-system, sans-serif">
         {score}
       </text>
-      <text x="43" y="54" textAnchor="middle" fontSize="8"
+      <text x="40" y="50" textAnchor="middle" fontSize="8"
             fill="rgba(255,255,255,.3)" fontFamily="system-ui, -apple-system, sans-serif">
         /100
       </text>
@@ -449,35 +509,60 @@ function CircleGauge({ score }: { score: number }) {
   );
 }
 
-function SafetyCard({ factor }: { factor: SafetyFactor }) {
-  const levels: Record<string, { color: string; bg: string }> = {
-    安全: { color: "#10B981", bg: "rgba(16,185,129,0.1)" },
-    注意: { color: "#F59E0B", bg: "rgba(245,158,11,0.1)" },
-    危険: { color: "#F06060", bg: "rgba(240,96,96,0.1)" },
-  };
-  const lv = levels[factor.level] ?? { color: C.text3, bg: "rgba(255,255,255,0.05)" };
+/* ── 今日の計画 ─────────────────────────────────── */
+function PlanFact({
+  icon, label, main, sub, color,
+}: {
+  icon: string; label: string; main: string; sub: string; color: string;
+}) {
   return (
     <div
-      className="rounded-xl px-3 py-3.5 flex flex-col gap-2"
+      className="rounded-2xl px-4 py-3.5"
       style={{ background: C.card, border: `1px solid ${C.border}` }}
     >
-      <p className="text-[9px] font-bold uppercase tracking-wider" style={{ color: C.text3 }}>
-        {factor.label}
-      </p>
-      <p className="text-[14px] font-bold leading-tight" style={{ color: C.text1 }}>
-        {factor.value}
-      </p>
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <span className="text-[14px] leading-none">{icon}</span>
+        <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: C.text3 }}>
+          {label}
+        </span>
+      </div>
+      <p className="text-[15px] font-bold leading-snug text-white">{main}</p>
+      <p className="text-[10px] mt-1 truncate" style={{ color }}>{sub}</p>
+    </div>
+  );
+}
+
+/* ── 判断の根拠 ─────────────────────────────────── */
+function ConditionFact({
+  icon, label, value, score,
+}: {
+  icon: string; label: string; value: string; score: number;
+}) {
+  const c = scoreColor(score);
+  return (
+    <div
+      className="rounded-xl px-3.5 py-3"
+      style={{ background: C.card, border: `1px solid ${C.border}` }}
+    >
+      <div className="flex items-center justify-between mb-1.5">
+        <div className="flex items-center gap-1.5">
+          <span className="text-[13px] leading-none">{icon}</span>
+          <span className="text-[10px] font-semibold" style={{ color: C.text3 }}>{label}</span>
+        </div>
+        <span className="text-[11px] font-black" style={{ color: c }}>{score}</span>
+      </div>
+      <p className="text-[13px] font-semibold leading-snug" style={{ color: C.text1 }}>{value}</p>
       <div
-        className="inline-flex items-center gap-1 self-start px-2 py-0.5 rounded-full"
-        style={{ background: lv.bg }}
+        className="mt-1.5 rounded-full overflow-hidden"
+        style={{ height: 2, background: "rgba(255,255,255,.07)" }}
       >
-        <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: lv.color }} />
-        <span className="text-[10px] font-bold" style={{ color: lv.color }}>{factor.level}</span>
+        <div className="h-full rounded-full" style={{ width: `${score}%`, background: c }} />
       </div>
     </div>
   );
 }
 
+/* ── 時間帯カード ────────────────────────────────── */
 function HourlyCard({ slot }: { slot: HourlySlot }) {
   const barH = Math.round((slot.score / 100) * 40);
   return (
@@ -511,7 +596,7 @@ function HourlyCard({ slot }: { slot: HourlySlot }) {
       >
         <div className="w-full" style={{ height: barH, background: slot.color }} />
       </div>
-      <p className="font-black text-[15px] leading-none num-tab" style={{ color: slot.color }}>
+      <p className="font-black text-[15px] leading-none" style={{ color: slot.color }}>
         {slot.score}
       </p>
       <p className="text-[9px] leading-none text-center whitespace-nowrap" style={{ color: C.text3 }}>
@@ -521,6 +606,7 @@ function HourlyCard({ slot }: { slot: HourlySlot }) {
   );
 }
 
+/* ── 魚種ランキング行 ───────────────────────────── */
 function FishRankRow({ fs, rank, isLast, spotId = "chigasaki" }: { fs: FishScore; rank: number; isLast: boolean; spotId?: string }) {
   const method = getMethodByFish(fs.fish.name);
   const c = scoreColor(fs.score);
@@ -531,7 +617,7 @@ function FishRankRow({ fs, rank, isLast, spotId = "chigasaki" }: { fs: FishScore
     >
       <div className="flex items-center gap-2.5">
         <span
-          className="font-black text-[11px] num-tab w-5 text-center flex-shrink-0"
+          className="font-black text-[11px] w-5 text-center flex-shrink-0"
           style={{ color: rank <= 3 ? c : C.text3 }}
         >
           {rank}
@@ -556,7 +642,7 @@ function FishRankRow({ fs, rank, isLast, spotId = "chigasaki" }: { fs: FishScore
             <div className="h-full rounded-full" style={{ width: `${fs.score}%`, background: c }} />
           </div>
         </div>
-        <span className="font-black text-[18px] num-tab flex-shrink-0" style={{ color: c }}>
+        <span className="font-black text-[18px] flex-shrink-0" style={{ color: c }}>
           {fs.score}
         </span>
       </div>
